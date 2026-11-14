@@ -265,7 +265,13 @@ class RenewalBot:
         ocr = self._get_ocr()
         # 限制字符集为数字和运算符，提高数学验证码识别率
         ocr.set_ranges("0123456789+-x/=")
-        captcha_text = ocr.classification(image_bytes)
+        # ddddocr 1.5.6 applies set_ranges only to probability output.
+        prediction = ocr.classification(image_bytes, probability=True)
+        captcha_text = "".join(
+            prediction["charsets"][max(range(len(row)), key=row.__getitem__)]
+            for row in prediction["probability"]
+            if row
+        )
 
         if not captcha_text:
             return None
